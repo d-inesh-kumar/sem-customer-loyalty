@@ -1,0 +1,159 @@
+---
+title: "Untitled"
+author: "dineshkumar"
+date: "2023-01-03"
+output: html_document
+---
+
+```{r}
+
+#LIBRARY
+library('lavaan')
+library(ltm)
+library(corrplot)
+library("semPlot")
+library(psych)
+
+```
+```{r}
+
+#DATA INPUT
+data=read.csv(file.choose(),header=T,sep=,)
+str(data)
+
+
+
+
+
+
+#
+data1=data.frame(data[,10:34])
+str(data1)
+
+cor(data1)
+
+corrplot(cor(data1))
+
+cronbach.alpha(x5, CI=TRUE, standardized=T)
+alpha(data1)
+
+#
+#KMO TEST (* 0.00 to 0.49 unacceptable * 0.50 to 0.59 miserable
+# * 0.60 to 0.69 mediocre * 0.70 to 0.79 middling
+# * 0.80 to 0.89 meritorious * 0.90 to 1.00 marvelous)
+
+KMO(data1)
+
+
+#Bartlett's test for sphericity ( significance level indicate that a factor 
+# analysis may be useful with our data)
+
+cortest.bartlett(data1)
+
+
+
+# parallel analysis (  /,fa="fa")
+fa.parallel(data1)
+
+#factor analysis with varimax rotation
+Nfacs <- 5
+fit <- factanal(data1, Nfacs, rotation="varimax")
+y=print(fit, digits=2, cutoff=0.3, sort=TRUE)
+
+
+
+
+
+
+###Reliability  analysis  ---cronbach's alpha
+
+alpha(data1,check.keys = T)
+
+x1<-data.frame(data1$easenavie,data1$secypaymetd ,data1$custcart,data1$exgpoly ,
+                       data1$deliveytime,data1$discount,data1$shipcost,data1$prtprice,
+               data$prtrang ,data1$prtimg,data1$proderview,data1$prtdescr)
+alpha(x1)
+
+
+x2=data.frame(data1$filteropt,data1$chekproces,data1$paymentopt,data1$pageload)
+alpha(x2)
+
+x3=data.frame(data1$commfeed ,data1$prtinfoseller,data1$satseqpay,data1$thridmediotor)
+alpha(x3)
+
+
+x4=data.frame(data1$oversatis ,data1$recomonline ,data1$loyalty)
+alpha(x4)
+
+
+x5=data.frame(data1$brokenitem,data1$badsale)
+alpha(x5)
+
+
+
+
+
+
+#sem model
+m1a<-
+  " #some
+    Service quality  =~easenavie+secypaymetd +custcart+exgpoly+deliveytime+
+    discount+shipcost+prtprice+prtrang +prtimg+proderview+prtdescr+oversatis
+    
+    Ease of use =~filteropt+chekproces+paymentopt+pageload+easenavie+ oversatis
+    
+    Security =~commfeed +prtinfoseller+satseqpay+thridmediotor+oversatis
+    
+    Customer Loyalty =~ oversatis +recomonline +loyalty 
+    
+    Bad service =~brokenitem+badsale
+    
+    
+#reg
+    
+  Security~Service quality+Bad service
+    Customer Loyalty~Service quality +Ease of use
+    
+    #cov
+   commfeed ~~ thridmediotor
+   prtinfoseller ~~     satseqpay
+   prtinfoseller ~~ thridmediotor
+   satseqpay ~~ thridmediotor
+   paymentopt ~~   recomonline
+   shipcost ~~      prtprice 
+   filteropt ~~    chekproces
+   prtimg ~~      prtdescr
+   exgpoly ~~        prtimg
+    prtdescr ~~     oversatis
+    filteropt ~~ thridmediotor
+    oversatis ~~   recomonline
+    deliveytime ~~      prtdescr
+    
+    
+"
+
+
+fit1<-sem(m1a,data=data)
+
+#SUMMARY
+summary(fit1)
+
+summary(fit1, standardized=TRUE,fit.measures=TRUE)
+
+
+inspect(fit1,"partable")
+inspectSampleCor(fit1,data=data,model.type="sem")
+inspect(fit1,what = "std",data=data,add.labels=T)
+#FIT MEASUREMENT
+fitmeasures (fit1, c("cfi","gfi","agfi","nfi","ifi","tli","rmsea","rmr"))
+#PLOT
+semPaths(fit1,what="paths", whatLabels="stand", rotation=2,freeStyle = 2,
+         style="lisrel")
+
+
+semPaths(fit1,what="paths", whatLabels="no",rotation=1,freeStyle = 1,
+         style="lisrel",cardinal =T)
+ 
+
+```
+
